@@ -137,10 +137,6 @@ object dmLocal: TdmLocal
       FieldName = 'idmaquina'
       Origin = 'idmaquina'
     end
-    object TAbastecimentoidoperador: TIntegerField
-      FieldName = 'idoperador'
-      Origin = 'idoperador'
-    end
     object TAbastecimentovolumelt: TBCDField
       FieldName = 'volumelt'
       Origin = 'volumelt'
@@ -168,10 +164,6 @@ object dmLocal: TdmLocal
       Origin = 'horimetro'
       Precision = 15
       Size = 3
-    end
-    object TAbastecimentoidatividade: TIntegerField
-      FieldName = 'idatividade'
-      Origin = 'idatividade'
     end
     object TAbastecimentoobs: TWideStringField
       FieldName = 'obs'
@@ -217,6 +209,18 @@ object dmLocal: TdmLocal
       Origin = 'kmatual'
       Precision = 15
       Size = 3
+    end
+    object TAbastecimentolatitude: TFMTBCDField
+      FieldName = 'latitude'
+      Origin = 'latitude'
+      Precision = 9
+      Size = 6
+    end
+    object TAbastecimentolongitude: TFMTBCDField
+      FieldName = 'longitude'
+      Origin = 'longitude'
+      Precision = 9
+      Size = 6
     end
   end
   object vQryAux: TFDQuery
@@ -548,6 +552,10 @@ object dmLocal: TdmLocal
     object TLocalEstoqueidcentrocusto: TIntegerField
       FieldName = 'idcentrocusto'
       Origin = 'idcentrocusto'
+    end
+    object TLocalEstoqueidcombustivel: TIntegerField
+      FieldName = 'idcombustivel'
+      Origin = 'idcombustivel'
     end
   end
   object TProdutos: TFDQuery

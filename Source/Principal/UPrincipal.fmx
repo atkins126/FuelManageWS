@@ -795,15 +795,17 @@ object frmPrincipal: TfrmPrincipal
   end
   object FDConPG: TFDConnection
     Params.Strings = (
-      'Database=FuelManage'
+      'Database=FuelManager'
       'User_Name=postgres'
       'Password=Dev#110485'
       'DriverID=PG')
+    Connected = True
     LoginPrompt = False
     Left = 240
     Top = 184
   end
   object PgDriverLink: TFDPhysPgDriverLink
+    VendorLib = 'D:\Projetos2021\Deploy\libpq.dll'
     Left = 240
     Top = 232
   end
