@@ -101,7 +101,8 @@ object dmLocal: TdmLocal
     OnReconcileError = TAbastecimentoReconcileError
     Connection = frmPrincipal.FDConPG
     SQL.Strings = (
-      'select * from abastecimento')
+      'select * from abastecimento'
+      'where status=1000')
     Left = 72
     Top = 152
     object TAbastecimentoid: TIntegerField
@@ -222,6 +223,15 @@ object dmLocal: TdmLocal
       Precision = 9
       Size = 6
     end
+    object TAbastecimentoalerta: TIntegerField
+      FieldName = 'alerta'
+      Origin = 'alerta'
+    end
+    object TAbastecimentodescricaoalerta: TWideMemoField
+      FieldName = 'descricaoalerta'
+      Origin = 'descricaoalerta'
+      BlobType = ftWideMemo
+    end
   end
   object vQryAux: TFDQuery
     CachedUpdates = True
@@ -229,69 +239,13 @@ object dmLocal: TdmLocal
     Left = 72
     Top = 24
   end
-  object TAbastecimentooutros: TFDQuery
-    CachedUpdates = True
-    OnReconcileError = TAbastecimentooutrosReconcileError
-    Connection = frmPrincipal.FDConPG
-    SQL.Strings = (
-      'select * from abastecimentooutros a ')
-    Left = 72
-    Top = 208
-    object TAbastecimentooutrosid: TIntegerField
-      FieldName = 'id'
-      Origin = 'id'
-      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
-    end
-    object TAbastecimentooutrosstatus: TIntegerField
-      FieldName = 'status'
-      Origin = 'status'
-    end
-    object TAbastecimentooutrosdatareg: TSQLTimeStampField
-      FieldName = 'datareg'
-      Origin = 'datareg'
-    end
-    object TAbastecimentooutrosidusuario: TIntegerField
-      FieldName = 'idusuario'
-      Origin = 'idusuario'
-    end
-    object TAbastecimentooutrosdataalteracao: TSQLTimeStampField
-      FieldName = 'dataalteracao'
-      Origin = 'dataalteracao'
-    end
-    object TAbastecimentooutrosidusuarioalteracao: TIntegerField
-      FieldName = 'idusuarioalteracao'
-      Origin = 'idusuarioalteracao'
-    end
-    object TAbastecimentooutrosidabastecimento: TIntegerField
-      FieldName = 'idabastecimento'
-      Origin = 'idabastecimento'
-    end
-    object TAbastecimentooutrosidproduto: TIntegerField
-      FieldName = 'idproduto'
-      Origin = 'idproduto'
-    end
-    object TAbastecimentooutrosquantidade: TBCDField
-      FieldName = 'quantidade'
-      Origin = 'quantidade'
-      Precision = 15
-      Size = 3
-    end
-    object TAbastecimentooutrossyncaws: TIntegerField
-      FieldName = 'syncaws'
-      Origin = 'syncaws'
-    end
-    object TAbastecimentooutrossyncfaz: TIntegerField
-      FieldName = 'syncfaz'
-      Origin = 'syncfaz'
-    end
-  end
   object TUsuario: TFDQuery
     CachedUpdates = True
     Connection = frmPrincipal.FDConPG
     SQL.Strings = (
       'select * from usuario'
       'where status=1')
-    Left = 192
+    Left = 200
     Top = 112
     object TUsuarioid: TIntegerField
       FieldName = 'id'
@@ -357,7 +311,7 @@ object dmLocal: TdmLocal
     SQL.Strings = (
       'select * from operadormaquinas o '
       'where status=1')
-    Left = 184
+    Left = 200
     Top = 176
     object Toperadormaquinasid: TIntegerField
       FieldName = 'id'
@@ -465,7 +419,7 @@ object dmLocal: TdmLocal
       'select * from centrocusto c '
       'where status=1')
     Left = 336
-    Top = 136
+    Top = 152
     object TCentroCustoid: TIntegerField
       FieldName = 'id'
       Origin = 'id'
@@ -564,8 +518,8 @@ object dmLocal: TdmLocal
     SQL.Strings = (
       'select * from produtos p '
       'where status=1')
-    Left = 344
-    Top = 280
+    Left = 336
+    Top = 272
     object TProdutosid: TIntegerField
       FieldName = 'id'
       Origin = 'id'
@@ -645,8 +599,8 @@ object dmLocal: TdmLocal
     SQL.Strings = (
       'select * from maquinaveiculo m '
       'where status=1')
-    Left = 328
-    Top = 64
+    Left = 336
+    Top = 104
     object TMaquinasid: TIntegerField
       FieldName = 'id'
       Origin = 'id'
@@ -752,5 +706,27 @@ object dmLocal: TdmLocal
       Precision = 15
       Size = 3
     end
+    object TMaquinasiderp: TIntegerField
+      FieldName = 'iderp'
+      Origin = 'iderp'
+    end
+    object TMaquinasvolumetanque: TBCDField
+      FieldName = 'volumetanque'
+      Origin = 'volumetanque'
+      Precision = 15
+      Size = 2
+    end
+  end
+  object TMovLocalEstoque: TFDQuery
+    CachedUpdates = True
+    OnReconcileError = TMovLocalEstoqueReconcileError
+    Connection = frmPrincipal.FDConPG
+    SQL.Strings = (
+      'select '
+      ' a.*'
+      'from tranferencialocalestoque a'
+      'where status=1000')
+    Left = 67
+    Top = 280
   end
 end

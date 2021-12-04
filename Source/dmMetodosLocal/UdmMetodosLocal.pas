@@ -45,18 +45,6 @@ type
     TStartDiariovolumelitrosfim: TBCDField;
     TAbastecimento: TFDQuery;
     vQryAux: TFDQuery;
-    TAbastecimentooutros: TFDQuery;
-    TAbastecimentooutrosid: TIntegerField;
-    TAbastecimentooutrosstatus: TIntegerField;
-    TAbastecimentooutrosdatareg: TSQLTimeStampField;
-    TAbastecimentooutrosidusuario: TIntegerField;
-    TAbastecimentooutrosdataalteracao: TSQLTimeStampField;
-    TAbastecimentooutrosidusuarioalteracao: TIntegerField;
-    TAbastecimentooutrosidabastecimento: TIntegerField;
-    TAbastecimentooutrosidproduto: TIntegerField;
-    TAbastecimentooutrosquantidade: TBCDField;
-    TAbastecimentooutrossyncaws: TIntegerField;
-    TAbastecimentooutrossyncfaz: TIntegerField;
     TUsuario: TFDQuery;
     TUsuarioid: TIntegerField;
     TUsuariostatus: TIntegerField;
@@ -183,6 +171,11 @@ type
     TAbastecimentokmatual: TBCDField;
     TAbastecimentolatitude: TFMTBCDField;
     TAbastecimentolongitude: TFMTBCDField;
+    TMovLocalEstoque: TFDQuery;
+    TAbastecimentoalerta: TIntegerField;
+    TAbastecimentodescricaoalerta: TWideMemoField;
+    TMaquinasiderp: TIntegerField;
+    TMaquinasvolumetanque: TBCDField;
     procedure TStartDiarioReconcileError(DataSet: TFDDataSet; E: EFDException;
       UpdateKind: TFDDatSRowState; var Action: TFDDAptReconcileAction);
     procedure TAbastecimentoReconcileError(DataSet: TFDDataSet; E: EFDException;
@@ -190,11 +183,17 @@ type
     procedure TAbastecimentooutrosReconcileError(DataSet: TFDDataSet;
       E: EFDException; UpdateKind: TFDDatSRowState;
       var Action: TFDDAptReconcileAction);
+    procedure TMovLocalEstoqueReconcileError(DataSet: TFDDataSet;
+      E: EFDException; UpdateKind: TFDDatSRowState;
+      var Action: TFDDAptReconcileAction);
   private
+    function RetornaIdCentroCustoPatrimonio(vPatrimonio:string):string;
     function RetornaMaxId(Atabela:string):string;
     procedure InsereSaidaAbastecimento(dataSaida, idcentrocusto,
      idlocalestoque, idproduto, qtditens, idresponsavel,idabastecimento: string);
     function AbreStartBomba(vIdlocal,vData:string):Boolean;
+    procedure AbreCentroCusto(vId:string);
+    procedure AbreLocalEstoque(vId:string);
   public
     function GetDataSetAsJSON(DataSet: TDataSet): TJSONObject;
     function GetTestaServidor            : TJSONObject;
@@ -202,13 +201,14 @@ type
     function GetUsuario: TJSONObject;
     function GetOperadorMaquinas: TJSONObject;
     function GetAtividadesAbastecimento: TJSONObject;
-    function GetCentroCusto: TJSONObject;
-    function GetLocalEstoque: TJSONObject;
+    function GetLocalEstoque(obj: TJSONObject): TJSONObject;
     function GetProdutos: TJSONObject;
     function GetMaquinas: TJSONObject;
+    function AcceptAutenticaPatrimonio(obj: TJSONObject): TJSONObject;
     function AcceptAbastecimento(obj: TJSONObject): TJSONObject;
-    function AcceptAbastecimentoOutros(obj: TJSONObject): TJSONObject;
     function AcceptStartDiario(obj: TJSONObject): TJSONObject;
+    function AcceptTransferencia(obj: TJSONObject): TJSONObject;
+    function AcceptCentroCusto(obj: TJSONObject): TJSONObject;
   end;
 
 var
@@ -223,6 +223,28 @@ uses UPrincipal;
 {$R *.dfm}
 
 { TdmLocal }
+
+procedure TdmLocal.AbreCentroCusto(vId: string);
+begin
+ with TCentroCusto,TCentroCusto.SQL do
+ begin
+   Clear;
+   Add('select * from centrocusto');
+   Add('where id='+vId);
+   Open;
+ end;
+end;
+
+procedure TdmLocal.AbreLocalEstoque(vId: string);
+begin
+ with TLocalEstoque,TLocalEstoque.SQL do
+ begin
+   Clear;
+   Add('select * from localestoque');
+   Add('where idcentrocusto='+vId);
+   Open;
+ end;
+end;
 
 function TdmLocal.AbreStartBomba(vIdlocal, vData: string): Boolean;
 begin
@@ -328,67 +350,80 @@ begin
  end;
 end;
 
-function TdmLocal.AcceptAbastecimentoOutros(obj: TJSONObject): TJSONObject;
+function TdmLocal.AcceptAutenticaPatrimonio(obj: TJSONObject): TJSONObject;
 var
   I,X: Integer;
   JsonToSend :TStringStream;
-  vField,vFieldJS:string;
+  vJsonString,vAcept:string;
   LJSon      : TJSONArray;
   StrAux     : TStringWriter;
   txtJson    : TJsonTextWriter;
   vQry       : TFDQuery;
-  vIdResult  :string;
+  vIdResult,vPatrimonio,vIdCentro :string;
+  vJoItem,vJoItem1   : TJSONArray;
+  vJoInsert,vJoItemO,vJoItemO1 : TJSONObject;
 begin
-  vQry       := TFDQuery.Create(nil);
-  vQry.Connection := frmPrincipal.FDConPG;
-  TAbastecimentooutros.Connection := frmPrincipal.FDConPG;
-  TAbastecimentooutros.Open();
-  JsonToSend := TStringStream.Create(obj.ToJSON);
-  vQry.LoadFromStream(JsonToSend,sfJSON);
-  vIdResult:='';
-  while not vQry.eof do
+  vJsonString    := obj.ToString;
+  vJoInsert      := TJSONObject.ParseJSONValue(vJsonString) as TJSONObject;
+  vJoItem        := vJoInsert.GetValue('Patrimonio') as TJSONArray;
+  vJoItemO       := vJoItem.Items[0] as TJSONObject;
+  vPatrimonio    := vJoItemO.GetValue('numero').value;
+  vIdCentro := dmLocal.RetornaIdCentroCustoPatrimonio(vPatrimonio);
+  if vIdCentro='-1' then
   begin
-    try
-     TAbastecimentooutros.Filtered := false;
-     TAbastecimentooutros.Close;
-     TAbastecimentooutros.Open;
-     TAbastecimentooutros.Insert;
-     for x := 0 to TAbastecimentooutros.Fields.Count -1 do
-     begin
-      vField  := StringReplace(TAbastecimentooutros.Fields[x].Name,
-       'TAbastecimentooutros','',[rfReplaceAll]);
-      if (vField<>'datareg') and (vField<>'id') then
-       TAbastecimentooutros.FieldByName(vField).AsString     := vQry.FieldByName(vField).AsString;
-     end;
-
-      TAbastecimentooutros.ApplyUpdates(-1);
-      if vIdResult.Length>0 then
-       vIdResult:=vIdResult+','+vQry.FieldByName('id').AsString
-      else
-       vIdResult:=vQry.FieldByName('id').AsString;
-      vQry.Next;
-     except
-       on E: Exception do
-       begin
-         StrAux  := TStringWriter.Create;
-         txtJson := TJsonTextWriter.Create(StrAux);
-         txtJson.Formatting := TJsonFormatting.Indented;
-         txtJson.WriteStartObject;
-         txtJson.WritePropertyName('Erro');
-         txtJson.WriteValue('Erro Ao Sincronizar Abatecimento Outros:'+E.Message);
-         txtJson.WriteEndObject;
-         Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
-       end;
-    end;
+    StrAux  := TStringWriter.Create;
+    txtJson := TJsonTextWriter.Create(StrAux);
+    txtJson.Formatting := TJsonFormatting.Indented;
+    txtJson.WriteStartObject;
+    txtJson.WritePropertyName('Erro');
+    txtJson.WriteValue('Patrimonio nao cadastrado');
+    txtJson.WriteEndObject;
+    Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
   end;
-  StrAux  := TStringWriter.Create;
-  txtJson := TJsonTextWriter.Create(StrAux);
-  txtJson.Formatting := TJsonFormatting.Indented;
-  txtJson.WriteStartObject;
-  txtJson.WritePropertyName('OK');
-  txtJson.WriteValue(vIdResult);
-  txtJson.WriteEndObject;
-  Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
+  if vIdCentro='0' then
+  begin
+    StrAux  := TStringWriter.Create;
+    txtJson := TJsonTextWriter.Create(StrAux);
+    txtJson.Formatting := TJsonFormatting.Indented;
+    txtJson.WriteStartObject;
+    txtJson.WritePropertyName('Erro');
+    txtJson.WriteValue('Patrimonio nao vinculado a nenhum centro de custo');
+    txtJson.WriteEndObject;
+    Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
+  end;
+  if(vIdCentro<>'-1')and (vIdCentro<>'0') then
+  begin
+    StrAux  := TStringWriter.Create;
+    txtJson := TJsonTextWriter.Create(StrAux);
+    txtJson.Formatting := TJsonFormatting.Indented;
+    txtJson.WriteStartObject;
+    txtJson.WritePropertyName('OK');
+    txtJson.WriteValue(vIdCentro);
+    txtJson.WriteEndObject;
+    Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
+  end;
+end;
+
+function TdmLocal.AcceptCentroCusto(obj: TJSONObject): TJSONObject;
+var
+  I,X: Integer;
+  JsonToSend :TStringStream;
+  vJsonString,vAcept:string;
+  LJSon      : TJSONArray;
+  StrAux     : TStringWriter;
+  txtJson    : TJsonTextWriter;
+  vQry       : TFDQuery;
+  vIdResult,vIdCentroCusto:string;
+  vJoItem,vJoItem1   : TJSONArray;
+  vJoInsert,vJoItemO,vJoItemO1 : TJSONObject;
+begin
+  vJsonString    := obj.ToString;
+  vJoInsert      := TJSONObject.ParseJSONValue(vJsonString) as TJSONObject;
+  vJoItem        := vJoInsert.GetValue('CentroCusto') as TJSONArray;
+  vJoItemO       := vJoItem.Items[0] as TJSONObject;
+  vIdCentroCusto := vJoItemO.GetValue('id').value;
+  AbreCentroCusto(vIdCentroCusto);
+  Result := GetDataSetAsJSON(TCentroCusto);
 end;
 
 function TdmLocal.AcceptStartDiario(obj: TJSONObject): TJSONObject;
@@ -458,6 +493,74 @@ begin
   Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
 end;
 
+function TdmLocal.AcceptTransferencia(obj: TJSONObject): TJSONObject;
+var
+  I,X: Integer;
+  JsonToSend :TStringStream;
+  vField,vFieldJS,vMaxID:string;
+  LJSon      : TJSONArray;
+  StrAux     : TStringWriter;
+  txtJson    : TJsonTextWriter;
+  vQry,vQryInsert       : TFDQuery;
+  vIdResult  :string;
+begin
+  vQry                  := TFDQuery.Create(nil);
+  vQry.Connection       := frmPrincipal.FDConPG;
+  vQryInsert            := TFDQuery.Create(nil);
+  vQryInsert.Connection := frmPrincipal.FDConPG;
+  JsonToSend := TStringStream.Create(obj.ToJSON);
+  vQry.LoadFromStream(JsonToSend,sfJSON);
+  if not vQry.IsEmpty then
+  begin
+    with vQryInsert,vQryInsert.SQL do
+    begin
+      Clear;
+      Add('INSERT INTO public.tranferencialocalestoque(');
+      Add('idusuario,');
+      Add('idlocalestoqueorigem,');
+      Add('idlocalestoquedetino,');
+      Add('idproduto,');
+      Add('qtde,');
+      Add('datamov,');
+      Add('hora)');
+      Add('values(');
+      Add(vQry.FieldByName('idusuario').AsString+',');
+      Add(vQry.FieldByName('idlocalestoqueorigem').AsString+',');
+      Add(vQry.FieldByName('idlocalestoquedetino').AsString+',');
+      Add(vQry.FieldByName('idproduto').AsString+',');
+      Add(vQry.FieldByName('qtde').AsString+',');
+      Add(FormatDateTime('yyyy-mm-dd',vQry.FieldByName('datamov').AsDateTime).QuotedString+',');
+      Add(vQry.FieldByName('hora').AsString.QuotedString);
+      Add(')');
+      try
+       vQryInsert.ExecSQL;
+       StrAux  := TStringWriter.Create;
+       txtJson := TJsonTextWriter.Create(StrAux);
+       txtJson.Formatting := TJsonFormatting.Indented;
+       txtJson.WriteStartObject;
+       txtJson.WritePropertyName('OK');
+       txtJson.WriteValue(vIdResult);
+       txtJson.WriteEndObject;
+       Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
+      except
+       on E: Exception do
+       begin
+        StrAux  := TStringWriter.Create;
+        txtJson := TJsonTextWriter.Create(StrAux);
+        txtJson.Formatting := TJsonFormatting.Indented;
+        txtJson.WriteStartObject;
+        txtJson.WritePropertyName('Erro');
+        txtJson.WriteValue('Erro Ao Sincronizar Transferencia:'+E.Message);
+        txtJson.WriteEndObject;
+        Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
+       end;
+      end;
+    end;
+  end;
+  vQryInsert.Free;
+  vQry.Free;
+end;
+
 function TdmLocal.GetDataSetAsJSON(DataSet: TDataSet): TJSONObject;
 var
   f: TField;
@@ -516,15 +619,22 @@ begin
  Result := GetDataSetAsJSON(TAuxAtividadesAbastecimento);
 end;
 
-function TdmLocal.GetCentroCusto: TJSONObject;
-begin
- TCentroCusto.Close;
- TCentroCusto.Open;
- Result := GetDataSetAsJSON(TCentroCusto);
-end;
 
-function TdmLocal.GetLocalEstoque: TJSONObject;
+
+function TdmLocal.GetLocalEstoque(obj: TJSONObject): TJSONObject;
+var
+  JsonToSend :TStringStream;
+  vJsonString:string;
+  vIdResult,vIdCentroCusto:string;
+  vJoItem,vJoItem1   : TJSONArray;
+  vJoInsert,vJoItemO,vJoItemO1 : TJSONObject;
 begin
+ vJsonString    := obj.ToString;
+ vJoInsert      := TJSONObject.ParseJSONValue(vJsonString) as TJSONObject;
+ vJoItem        := vJoInsert.GetValue('CentroCusto') as TJSONArray;
+ vJoItemO       := vJoItem.Items[0] as TJSONObject;
+ vIdCentroCusto := vJoItemO.GetValue('id').value;
+ AbreLocalEstoque(vIdCentroCusto);
  TLocalEstoque.Close;
  TLocalEstoque.Open;
  Result := GetDataSetAsJSON(TLocalEstoque);
@@ -542,6 +652,25 @@ begin
  TMaquinas.Close;
  TMaquinas.Open;
  Result := GetDataSetAsJSON(TMaquinas);
+end;
+
+function TdmLocal.RetornaIdCentroCustoPatrimonio(vPatrimonio: string): string;
+begin
+ with vQryAux,vQryAux.SQL do
+ begin
+   Clear;
+   Add('select *  from devices where status=1 and patrimonio ='+vPatrimonio);
+   Open;
+   if vQryAux.IsEmpty then
+    Result:='-1'
+   else
+   begin
+     if vQryAux.FieldByName('idcentrocusto').AsString.Length=0 then
+       Result:='0'
+     else
+       Result:= vQryAux.FieldByName('idcentrocusto').AsString;
+   end;
+ end;
 end;
 
 function TdmLocal.RetornaMaxId(Atabela: string): string;
@@ -566,6 +695,13 @@ procedure TdmLocal.TAbastecimentoReconcileError(DataSet: TFDDataSet;
   var Action: TFDDAptReconcileAction);
 begin
  frmPrincipal.mlog.Lines.Add(e.Message);
+end;
+
+procedure TdmLocal.TMovLocalEstoqueReconcileError(DataSet: TFDDataSet;
+  E: EFDException; UpdateKind: TFDDatSRowState;
+  var Action: TFDDAptReconcileAction);
+begin
+  frmPrincipal.mlog.Lines.Add(e.Message);
 end;
 
 procedure TdmLocal.TStartDiarioReconcileError(DataSet: TFDDataSet;

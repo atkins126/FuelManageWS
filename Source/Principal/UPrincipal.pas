@@ -13,7 +13,7 @@ uses
   FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   FireDAC.Phys, FireDAC.Phys.PG, FireDAC.FMXUI.Wait, Data.DB,
   FireDAC.Comp.Client,System.Json.writers,System.IniFiles,System.JSON.Types,
-  IdBaseComponent, IdComponent, IdIPWatch;
+  IdBaseComponent, IdComponent, IdIPWatch,Horse.BasicAuthentication;
 
 type
   TfrmPrincipal = class(TForm)
@@ -46,7 +46,7 @@ uses UdmMetodosLocal;
 
 procedure TfrmPrincipal.btnFecharClick(Sender: TObject);
 begin
- Application.Terminate;
+  Application.Terminate;
 end;
 
 function TfrmPrincipal.ConectaPG_LOCAL: TJSONObject;
@@ -166,6 +166,12 @@ procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin
   ConectaPG_LOCAL;
   THorse.Use(Jhonson);
+  THorse.Use(HorseBasicAuthentication(
+   function(const AUsername, APassword: string): Boolean
+    begin
+      Result := AUsername.Equals('fuelmanage') and APassword.Equals('991528798');
+    end)
+   );
   THorse.Use(HandleException);
   THorse.Get('/ping',
   procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
@@ -260,34 +266,6 @@ begin
      end;
   end);
 
-  THorse.Get('/GetCentroCusto',
-  procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
-  begin
-     mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' : Baixando Centro de Custo');
-     try
-      Res.Send<TJSONObject>(dmLocal.GetCentroCusto);
-     except on ex:exception do
-      begin
-       mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' : Error '+ex.Message);
-       Res.Send(tjsonobject.Create.AddPair('Erro',ex.Message)).Status(201);
-      end;
-     end;
-  end);
-
-  THorse.Get('/GetLocalEstoque',
-  procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
-  begin
-     mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' : Baixando Local Estoque');
-     try
-      Res.Send<TJSONObject>(dmLocal.GetLocalEstoque);
-     except on ex:exception do
-      begin
-       mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' : Error '+ex.Message);
-       Res.Send(tjsonobject.Create.AddPair('Erro',ex.Message)).Status(201);
-      end;
-     end;
-  end);
-
   THorse.Get('/GetProdutos',
   procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
   begin
@@ -321,7 +299,7 @@ begin
   var
     LBody,LBodyRed: TJSONObject;
   begin
-    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Enviando Abastecimento');
+    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Recebendo Abastecimento');
     LBody := Req.Body<TJSONObject>;
     try
      LBodyRed:=dmLocal.AcceptAbastecimento(LBody);
@@ -334,15 +312,16 @@ begin
     end;
   end);
 
-  THorse.Post('/AbastecimentoOutros',
+  
+  THorse.Post('/Transferencia',
   procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
   var
     LBody,LBodyRed: TJSONObject;
   begin
-    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Enviando Abastecimento Outros');
+    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Recebendo Transferencia Outros');
     LBody := Req.Body<TJSONObject>;
     try
-     LBodyRed:=dmLocal.AcceptAbastecimentoOutros(LBody);
+     LBodyRed:=dmLocal.AcceptTransferencia(LBody);
      Res.Send(LBodyRed).Status(200)
      except on ex:exception do
      begin
@@ -352,15 +331,69 @@ begin
     end;
   end);
 
-   THorse.Post('/StartDiario',
+  THorse.Post('/StartDiario',
   procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
   var
     LBody,LBodyRed: TJSONObject;
   begin
-    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Enviando Start Diario');
+    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Recebendo Start Diario');
     LBody := Req.Body<TJSONObject>;
     try
      LBodyRed:=dmLocal.AcceptStartDiario(LBody);
+     Res.Send(LBodyRed).Status(200)
+     except on ex:exception do
+     begin
+      mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Erro :'+ex.Message);
+      Res.Send(tjsonobject.Create.AddPair('Mensagem', ex.Message)).Status(500);
+     end;
+    end;
+  end);
+
+  THorse.Post('/AutenticaPatrimonio',
+  procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
+  var
+    LBody,LBodyRed: TJSONObject;
+  begin
+    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Autentica Patrimonio');
+    LBody := Req.Body<TJSONObject>;
+    try
+     LBodyRed:=dmLocal.AcceptAutenticaPatrimonio(LBody);
+     Res.Send(LBodyRed).Status(200)
+     except on ex:exception do
+     begin
+      mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Erro :'+ex.Message);
+      Res.Send(tjsonobject.Create.AddPair('Mensagem', ex.Message)).Status(500);
+     end;
+    end;
+  end);
+
+  THorse.Post('/GetCentroCusto',
+  procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
+  var
+    LBody,LBodyRed: TJSONObject;
+  begin
+    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Baixando Centro de Custo');
+    LBody := Req.Body<TJSONObject>;
+    try
+     LBodyRed:=dmLocal.AcceptCentroCusto(LBody);
+     Res.Send(LBodyRed).Status(200)
+     except on ex:exception do
+     begin
+      mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Erro :'+ex.Message);
+      Res.Send(tjsonobject.Create.AddPair('Mensagem', ex.Message)).Status(500);
+     end;
+    end;
+  end);
+
+  THorse.Post('/GetLocalEstoque',
+  procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
+  var
+    LBody,LBodyRed: TJSONObject;
+  begin
+    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Baixando Local Estoque');
+    LBody := Req.Body<TJSONObject>;
+    try
+     LBodyRed:=dmLocal.GetLocalEstoque(LBody);
      Res.Send(LBodyRed).Status(200)
      except on ex:exception do
      begin
