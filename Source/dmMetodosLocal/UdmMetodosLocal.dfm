@@ -729,4 +729,128 @@ object dmLocal: TdmLocal
     Left = 67
     Top = 280
   end
+  object TLubrificacaoprodutos: TFDQuery
+    CachedUpdates = True
+    Connection = frmPrincipal.FDConPG
+    SQL.Strings = (
+      'select '
+      '*'
+      'from lubrificacaoprodutos l'
+      'where syncaws=0')
+    Left = 432
+    Top = 128
+    object TLubrificacaoprodutosid: TIntegerField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+    end
+    object TLubrificacaoprodutosstatus: TIntegerField
+      FieldName = 'status'
+      Origin = 'status'
+    end
+    object TLubrificacaoprodutosdatareg: TSQLTimeStampField
+      FieldName = 'datareg'
+      Origin = 'datareg'
+    end
+    object TLubrificacaoprodutosidusuario: TIntegerField
+      FieldName = 'idusuario'
+      Origin = 'idusuario'
+    end
+    object TLubrificacaoprodutosdataalteracao: TSQLTimeStampField
+      FieldName = 'dataalteracao'
+      Origin = 'dataalteracao'
+    end
+    object TLubrificacaoprodutosidusuarioalteracao: TIntegerField
+      FieldName = 'idusuarioalteracao'
+      Origin = 'idusuarioalteracao'
+    end
+    object TLubrificacaoprodutosidlubrificacao: TIntegerField
+      FieldName = 'idlubrificacao'
+      Origin = 'idlubrificacao'
+    end
+    object TLubrificacaoprodutosidproduto: TIntegerField
+      FieldName = 'idproduto'
+      Origin = 'idproduto'
+    end
+    object TLubrificacaoprodutosqtd: TBCDField
+      FieldName = 'qtd'
+      Origin = 'qtd'
+      Precision = 15
+      Size = 2
+    end
+    object TLubrificacaoprodutossyncaws: TIntegerField
+      FieldName = 'syncaws'
+      Origin = 'syncaws'
+    end
+    object TLubrificacaoprodutossyncfaz: TIntegerField
+      FieldName = 'syncfaz'
+      Origin = 'syncfaz'
+    end
+  end
+  object TLubrificacao: TFDQuery
+    CachedUpdates = True
+    Connection = frmPrincipal.FDConPG
+    SQL.Strings = (
+      'select '
+      '*'
+      'from lubrificacao '
+      'where syncaws=0')
+    Left = 432
+    Top = 56
+    object TLubrificacaoid: TIntegerField
+      FieldName = 'id'
+    end
+    object TLubrificacaostatus: TIntegerField
+      FieldName = 'status'
+    end
+    object TLubrificacaodatareg: TSQLTimeStampField
+      FieldName = 'datareg'
+    end
+    object TLubrificacaoidusuario: TIntegerField
+      FieldName = 'idusuario'
+    end
+    object TLubrificacaodataalteracao: TSQLTimeStampField
+      FieldName = 'dataalteracao'
+    end
+    object TLubrificacaoidusuarioalteracao: TIntegerField
+      FieldName = 'idusuarioalteracao'
+    end
+    object TLubrificacaoidmaquina: TIntegerField
+      FieldName = 'idmaquina'
+    end
+    object TLubrificacaodatatroca: TDateField
+      FieldName = 'datatroca'
+    end
+    object TLubrificacaotipo: TIntegerField
+      FieldName = 'tipo'
+    end
+    object TLubrificacaosyncaws: TIntegerField
+      FieldName = 'syncaws'
+    end
+    object TLubrificacaosyncfaz: TIntegerField
+      FieldName = 'syncfaz'
+    end
+    object TLubrificacaohorimetro: TBCDField
+      FieldName = 'horimetro'
+      Precision = 15
+      Size = 2
+    end
+    object TLubrificacaokm: TBCDField
+      FieldName = 'km'
+      Precision = 15
+      Size = 2
+    end
+    object TLubrificacaoidcentrocusto: TIntegerField
+      FieldName = 'idcentrocusto'
+    end
+    object TLubrificacaoalerta: TIntegerField
+      FieldName = 'alerta'
+      Origin = 'alerta'
+    end
+    object TLubrificacaodescricaoalerta: TWideMemoField
+      FieldName = 'descricaoalerta'
+      Origin = 'descricaoalerta'
+      BlobType = ftWideMemo
+    end
+  end
 end
