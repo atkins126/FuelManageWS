@@ -312,7 +312,43 @@ begin
     end;
   end);
 
-  
+  THorse.Post('/Lubrificacao',
+  procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
+  var
+    LBody,LBodyRed: TJSONObject;
+  begin
+    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Enviando Lubrificacao');
+    LBody := Req.Body<TJSONObject>;
+    try
+     LBodyRed:=dmLocal.AcceptLubrificacao(LBody);
+     Res.Send(LBodyRed).Status(200)
+     except on ex:exception do
+     begin
+      mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Erro :'+ex.Message);
+      Res.Send(tjsonobject.Create.AddPair('Mensagem', ex.Message)).Status(500);
+     end;
+    end;
+  end);
+
+
+  THorse.Post('/LubrificacaoProduto',
+  procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
+  var
+    LBody,LBodyRed: TJSONObject;
+  begin
+    mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Enviando Lubrificacao Produtos');
+    LBody := Req.Body<TJSONObject>;
+    try
+     LBodyRed:=dmLocal.AcceptLubrificacaoProdutos(LBody);
+     Res.Send(LBodyRed).Status(200)
+     except on ex:exception do
+     begin
+      mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' Erro :'+ex.Message);
+      Res.Send(tjsonobject.Create.AddPair('Mensagem', ex.Message)).Status(500);
+     end;
+    end;
+  end);
+
   THorse.Post('/Transferencia',
   procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
   var

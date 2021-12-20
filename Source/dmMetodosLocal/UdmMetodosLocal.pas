@@ -176,6 +176,35 @@ type
     TAbastecimentodescricaoalerta: TWideMemoField;
     TMaquinasiderp: TIntegerField;
     TMaquinasvolumetanque: TBCDField;
+    TLubrificacaoprodutos: TFDQuery;
+    TLubrificacao: TFDQuery;
+    TLubrificacaoid: TIntegerField;
+    TLubrificacaostatus: TIntegerField;
+    TLubrificacaodatareg: TSQLTimeStampField;
+    TLubrificacaoidusuario: TIntegerField;
+    TLubrificacaodataalteracao: TSQLTimeStampField;
+    TLubrificacaoidusuarioalteracao: TIntegerField;
+    TLubrificacaoidmaquina: TIntegerField;
+    TLubrificacaodatatroca: TDateField;
+    TLubrificacaotipo: TIntegerField;
+    TLubrificacaosyncaws: TIntegerField;
+    TLubrificacaosyncfaz: TIntegerField;
+    TLubrificacaohorimetro: TBCDField;
+    TLubrificacaokm: TBCDField;
+    TLubrificacaoidcentrocusto: TIntegerField;
+    TLubrificacaoprodutosid: TIntegerField;
+    TLubrificacaoprodutosstatus: TIntegerField;
+    TLubrificacaoprodutosdatareg: TSQLTimeStampField;
+    TLubrificacaoprodutosidusuario: TIntegerField;
+    TLubrificacaoprodutosdataalteracao: TSQLTimeStampField;
+    TLubrificacaoprodutosidusuarioalteracao: TIntegerField;
+    TLubrificacaoprodutosidlubrificacao: TIntegerField;
+    TLubrificacaoprodutosidproduto: TIntegerField;
+    TLubrificacaoprodutosqtd: TBCDField;
+    TLubrificacaoprodutossyncaws: TIntegerField;
+    TLubrificacaoprodutossyncfaz: TIntegerField;
+    TLubrificacaoalerta: TIntegerField;
+    TLubrificacaodescricaoalerta: TWideMemoField;
     procedure TStartDiarioReconcileError(DataSet: TFDDataSet; E: EFDException;
       UpdateKind: TFDDatSRowState; var Action: TFDDAptReconcileAction);
     procedure TAbastecimentoReconcileError(DataSet: TFDDataSet; E: EFDException;
@@ -209,6 +238,9 @@ type
     function AcceptStartDiario(obj: TJSONObject): TJSONObject;
     function AcceptTransferencia(obj: TJSONObject): TJSONObject;
     function AcceptCentroCusto(obj: TJSONObject): TJSONObject;
+
+    function AcceptLubrificacao(obj: TJSONObject): TJSONObject;
+    function AcceptLubrificacaoProdutos(obj: TJSONObject): TJSONObject;
   end;
 
 var
@@ -424,6 +456,125 @@ begin
   vIdCentroCusto := vJoItemO.GetValue('id').value;
   AbreCentroCusto(vIdCentroCusto);
   Result := GetDataSetAsJSON(TCentroCusto);
+end;
+
+function TdmLocal.AcceptLubrificacao(obj: TJSONObject): TJSONObject;
+var
+  I,X: Integer;
+  JsonToSend :TStringStream;
+  vField,vFieldJS,vMaxID:string;
+  LJSon      : TJSONArray;
+  StrAux     : TStringWriter;
+  txtJson    : TJsonTextWriter;
+  vQry       : TFDQuery;
+  vIdResult,vIdProduto  :string;
+begin
+  vQry       := TFDQuery.Create(nil);
+  vQry.Connection := frmPrincipal.FDConPG;
+  TLubrificacao.Connection := frmPrincipal.FDConPG;
+  TLubrificacao.Open();
+  JsonToSend := TStringStream.Create(obj.ToJSON);
+  vQry.LoadFromStream(JsonToSend,sfJSON);
+  vIdResult:='';
+  while not vQry.eof do
+  begin
+    TLubrificacao.Filtered := false;
+    TLubrificacao.Close;
+    TLubrificacao.Open;
+    TLubrificacao.Insert;
+    for x := 0 to TLubrificacao.Fields.Count -1 do
+    begin
+     vField  := StringReplace(TLubrificacao.Fields[x].Name,
+      'TLubrificacao','',[rfReplaceAll]);
+     if (vField<>'datareg') and (vField<>'id') and (vQry.FindField(vField) <> nil)
+     and (TLubrificacao.FindField(vField) <> nil) then
+      TLubrificacao.FieldByName(vField).AsString     := vQry.FieldByName(vField).AsString;
+    end;
+    try
+      TLubrificacao.ApplyUpdates(-1);
+      vIdResult := RetornaMaxId('lubrificacao');
+      vQry.Next;
+     except
+       on E: Exception do
+       begin
+         StrAux  := TStringWriter.Create;
+         txtJson := TJsonTextWriter.Create(StrAux);
+         txtJson.Formatting := TJsonFormatting.Indented;
+         txtJson.WriteStartObject;
+         txtJson.WritePropertyName('Erro');
+         txtJson.WriteValue('Erro Ao Sincronizar Lubrificacao:'+E.Message);
+         txtJson.WriteEndObject;
+         Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
+       end;
+    end;
+  end;
+  StrAux  := TStringWriter.Create;
+  txtJson := TJsonTextWriter.Create(StrAux);
+  txtJson.Formatting := TJsonFormatting.Indented;
+  txtJson.WriteStartObject;
+  txtJson.WritePropertyName('OK');
+  txtJson.WriteValue(vIdResult);
+  txtJson.WriteEndObject;
+  Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
+end;
+
+function TdmLocal.AcceptLubrificacaoProdutos(obj: TJSONObject): TJSONObject;
+var
+  I,X: Integer;
+  JsonToSend :TStringStream;
+  vField,vFieldJS,vMaxID:string;
+  LJSon      : TJSONArray;
+  StrAux     : TStringWriter;
+  txtJson    : TJsonTextWriter;
+  vQry       : TFDQuery;
+  vIdResult,vIdProduto  :string;
+begin
+  vQry       := TFDQuery.Create(nil);
+  vQry.Connection := frmPrincipal.FDConPG;
+  TLubrificacaoprodutos.Connection := frmPrincipal.FDConPG;
+  TLubrificacaoprodutos.Open();
+  JsonToSend := TStringStream.Create(obj.ToJSON);
+  vQry.LoadFromStream(JsonToSend,sfJSON);
+  vIdResult:='';
+  while not vQry.eof do
+  begin
+    TLubrificacaoprodutos.Filtered := false;
+    TLubrificacaoprodutos.Close;
+    TLubrificacaoprodutos.Open;
+    TLubrificacaoprodutos.Insert;
+    for x := 0 to TLubrificacaoprodutos.Fields.Count -1 do
+    begin
+     vField  := StringReplace(TLubrificacaoprodutos.Fields[x].Name,
+      'TLubrificacaoprodutos','',[rfReplaceAll]);
+     if (vField<>'datareg') and (vField<>'id') and (vQry.FindField(vField) <> nil)
+     and (TLubrificacaoprodutos.FindField(vField) <> nil) then
+      TLubrificacaoprodutos.FieldByName(vField).AsString     := vQry.FieldByName(vField).AsString;
+    end;
+    try
+      TLubrificacaoprodutos.ApplyUpdates(-1);
+      vQry.Next;
+     except
+       on E: Exception do
+       begin
+         StrAux  := TStringWriter.Create;
+         txtJson := TJsonTextWriter.Create(StrAux);
+         txtJson.Formatting := TJsonFormatting.Indented;
+         txtJson.WriteStartObject;
+         txtJson.WritePropertyName('Erro');
+         txtJson.WriteValue('Erro Ao Sincronizar Lubrificacao:'+E.Message);
+         txtJson.WriteEndObject;
+         Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
+       end;
+    end;
+  end;
+  StrAux  := TStringWriter.Create;
+  txtJson := TJsonTextWriter.Create(StrAux);
+  txtJson.Formatting := TJsonFormatting.Indented;
+  txtJson.WriteStartObject;
+  txtJson.WritePropertyName('OK');
+  txtJson.WriteValue(vIdResult);
+  txtJson.WriteEndObject;
+  Result := TJsonObject.ParseJSONValue(TEncoding.UTF8.GetBytes(StrAux.ToString),0)as TJSONObject;
 end;
 
 function TdmLocal.AcceptStartDiario(obj: TJSONObject): TJSONObject;
