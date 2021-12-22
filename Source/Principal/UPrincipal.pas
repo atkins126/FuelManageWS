@@ -180,7 +180,9 @@ begin
   end);
   THorse.Listen(8089, procedure(Horse: THorse)
   begin
-    lblWS.Text := ('WS Fuel Manje Rodando no ip:'+IdIPWatch1.LocalIP+' na porta: ' + Horse.Port.ToString+' Versão:'+GetVersaoArq);
+    lblWS.Text := ('WS Fuel Manje Rodando no ip:'+
+     IdIPWatch1.LocalIP+' na porta: ' + Horse.Port.ToString+' Versão:'+
+      GetVersaoArq);
     Application.ProcessMessages;
   end);
  THorse.Get('/conectadblocal',
@@ -238,6 +240,20 @@ begin
       end;
      end;
   end);
+  THorse.Get('/GetAuxCompLub',
+  procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
+  begin
+     mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' : Baixando Compartimentos');
+     try
+      Res.Send<TJSONObject>(dmLocal.GetCompartimentLub);
+     except on ex:exception do
+      begin
+       mLog.Lines.Add(FormatDateTime('dd-mm-yyyy-hh:mm:ss',now)+' : Error '+ex.Message);
+       Res.Send(tjsonobject.Create.AddPair('Erro',ex.Message)).Status(201);
+      end;
+     end;
+  end);
+
 
   THorse.Get('/GetOperadorMaquinas',
   procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
