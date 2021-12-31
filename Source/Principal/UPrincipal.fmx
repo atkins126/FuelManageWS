@@ -799,6 +799,7 @@ object frmPrincipal: TfrmPrincipal
       'Database=FuelManager'
       'User_Name=postgres'
       'Password=Dev#110485'
+      'Server=13.58.255.43'
       'DriverID=PG')
     LoginPrompt = False
     Left = 240

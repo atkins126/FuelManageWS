@@ -205,6 +205,34 @@ type
     TLubrificacaoprodutossyncfaz: TIntegerField;
     TLubrificacaoalerta: TIntegerField;
     TLubrificacaodescricaoalerta: TWideMemoField;
+    TLubrificacaoidlocalestoque: TIntegerField;
+    TAuxCompLub: TFDQuery;
+    TAuxCompLubid: TIntegerField;
+    TAuxCompLubstatus: TIntegerField;
+    TAuxCompLubdatareg: TSQLTimeStampField;
+    TAuxCompLubidusuario: TIntegerField;
+    TAuxCompLubdataalteracao: TSQLTimeStampField;
+    TAuxCompLubidusuarioalteracao: TIntegerField;
+    TAuxCompLubnome: TWideStringField;
+    TAuxCompLubsyncaws: TIntegerField;
+    TLubrificacaoidcompartimento: TIntegerField;
+    TLubrificacaolatitude: TFMTBCDField;
+    TLubrificacaolongitude: TFMTBCDField;
+    TMovLocalEstoqueid: TIntegerField;
+    TMovLocalEstoquestatus: TIntegerField;
+    TMovLocalEstoquedatareg: TSQLTimeStampField;
+    TMovLocalEstoqueidusuario: TIntegerField;
+    TMovLocalEstoquedataalteracao: TSQLTimeStampField;
+    TMovLocalEstoqueidusuarioalteracao: TIntegerField;
+    TMovLocalEstoqueidlocalestoqueorigem: TIntegerField;
+    TMovLocalEstoqueidlocalestoquedetino: TIntegerField;
+    TMovLocalEstoqueidproduto: TIntegerField;
+    TMovLocalEstoqueqtde: TBCDField;
+    TMovLocalEstoquedatamov: TDateField;
+    TMovLocalEstoquehora: TTimeField;
+    TMovLocalEstoquesyncaws: TIntegerField;
+    TMovLocalEstoqueimg: TBlobField;
+    TMovLocalEstoqueimgfim: TBlobField;
     procedure TStartDiarioReconcileError(DataSet: TFDDataSet; E: EFDException;
       UpdateKind: TFDDatSRowState; var Action: TFDDAptReconcileAction);
     procedure TAbastecimentoReconcileError(DataSet: TFDDataSet; E: EFDException;
@@ -233,6 +261,7 @@ type
     function GetLocalEstoque(obj: TJSONObject): TJSONObject;
     function GetProdutos: TJSONObject;
     function GetMaquinas: TJSONObject;
+    function GetCompartimentLub: TJSONObject;
     function AcceptAutenticaPatrimonio(obj: TJSONObject): TJSONObject;
     function AcceptAbastecimento(obj: TJSONObject): TJSONObject;
     function AcceptStartDiario(obj: TJSONObject): TJSONObject;
@@ -673,7 +702,9 @@ begin
       Add('idproduto,');
       Add('qtde,');
       Add('datamov,');
-      Add('hora)');
+      Add('hora,');
+      Add('img,');
+      Add('imgfim)');
       Add('values(');
       Add(vQry.FieldByName('idusuario').AsString+',');
       Add(vQry.FieldByName('idlocalestoqueorigem').AsString+',');
@@ -681,7 +712,9 @@ begin
       Add(vQry.FieldByName('idproduto').AsString+',');
       Add(vQry.FieldByName('qtde').AsString+',');
       Add(FormatDateTime('yyyy-mm-dd',vQry.FieldByName('datamov').AsDateTime).QuotedString+',');
-      Add(vQry.FieldByName('hora').AsString.QuotedString);
+      Add(vQry.FieldByName('hora').AsString.QuotedString+',');
+      Add(vQry.FieldByName('img').AsString.QuotedString+',');
+      Add(vQry.FieldByName('imgfim').AsString.QuotedString);
       Add(')');
       try
        vQryInsert.ExecSQL;
@@ -771,6 +804,13 @@ begin
 end;
 
 
+
+function TdmLocal.GetCompartimentLub: TJSONObject;
+begin
+ TAuxCompLub.Close;
+ TAuxCompLub.Open;
+ Result := GetDataSetAsJSON(TAuxCompLub);
+end;
 
 function TdmLocal.GetLocalEstoque(obj: TJSONObject): TJSONObject;
 var

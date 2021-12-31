@@ -728,6 +728,69 @@ object dmLocal: TdmLocal
       'where status=1000')
     Left = 67
     Top = 280
+    object TMovLocalEstoqueid: TIntegerField
+      FieldName = 'id'
+      Origin = 'id'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+    end
+    object TMovLocalEstoquestatus: TIntegerField
+      FieldName = 'status'
+      Origin = 'status'
+    end
+    object TMovLocalEstoquedatareg: TSQLTimeStampField
+      FieldName = 'datareg'
+      Origin = 'datareg'
+    end
+    object TMovLocalEstoqueidusuario: TIntegerField
+      FieldName = 'idusuario'
+      Origin = 'idusuario'
+    end
+    object TMovLocalEstoquedataalteracao: TSQLTimeStampField
+      FieldName = 'dataalteracao'
+      Origin = 'dataalteracao'
+    end
+    object TMovLocalEstoqueidusuarioalteracao: TIntegerField
+      FieldName = 'idusuarioalteracao'
+      Origin = 'idusuarioalteracao'
+    end
+    object TMovLocalEstoqueidlocalestoqueorigem: TIntegerField
+      FieldName = 'idlocalestoqueorigem'
+      Origin = 'idlocalestoqueorigem'
+    end
+    object TMovLocalEstoqueidlocalestoquedetino: TIntegerField
+      FieldName = 'idlocalestoquedetino'
+      Origin = 'idlocalestoquedetino'
+    end
+    object TMovLocalEstoqueidproduto: TIntegerField
+      FieldName = 'idproduto'
+      Origin = 'idproduto'
+    end
+    object TMovLocalEstoqueqtde: TBCDField
+      FieldName = 'qtde'
+      Origin = 'qtde'
+      Precision = 15
+      Size = 3
+    end
+    object TMovLocalEstoquedatamov: TDateField
+      FieldName = 'datamov'
+      Origin = 'datamov'
+    end
+    object TMovLocalEstoquehora: TTimeField
+      FieldName = 'hora'
+      Origin = 'hora'
+    end
+    object TMovLocalEstoquesyncaws: TIntegerField
+      FieldName = 'syncaws'
+      Origin = 'syncaws'
+    end
+    object TMovLocalEstoqueimg: TBlobField
+      FieldName = 'img'
+      Origin = 'img'
+    end
+    object TMovLocalEstoqueimgfim: TBlobField
+      FieldName = 'imgfim'
+      Origin = 'imgfim'
+    end
   end
   object TLubrificacaoprodutos: TFDQuery
     CachedUpdates = True
@@ -851,6 +914,58 @@ object dmLocal: TdmLocal
       FieldName = 'descricaoalerta'
       Origin = 'descricaoalerta'
       BlobType = ftWideMemo
+    end
+    object TLubrificacaoidlocalestoque: TIntegerField
+      FieldName = 'idlocalestoque'
+      Origin = 'idlocalestoque'
+    end
+    object TLubrificacaoidcompartimento: TIntegerField
+      FieldName = 'idcompartimento'
+      Origin = 'idcompartimento'
+    end
+    object TLubrificacaolatitude: TFMTBCDField
+      FieldName = 'latitude'
+      Origin = 'latitude'
+      Precision = 9
+      Size = 6
+    end
+    object TLubrificacaolongitude: TFMTBCDField
+      FieldName = 'longitude'
+      Origin = 'longitude'
+      Precision = 9
+      Size = 6
+    end
+  end
+  object TAuxCompLub: TFDQuery
+    Connection = frmPrincipal.FDConPG
+    SQL.Strings = (
+      'select * from compartimentolubricficacao')
+    Left = 424
+    Top = 200
+    object TAuxCompLubid: TIntegerField
+      FieldName = 'id'
+    end
+    object TAuxCompLubstatus: TIntegerField
+      FieldName = 'status'
+    end
+    object TAuxCompLubdatareg: TSQLTimeStampField
+      FieldName = 'datareg'
+    end
+    object TAuxCompLubidusuario: TIntegerField
+      FieldName = 'idusuario'
+    end
+    object TAuxCompLubdataalteracao: TSQLTimeStampField
+      FieldName = 'dataalteracao'
+    end
+    object TAuxCompLubidusuarioalteracao: TIntegerField
+      FieldName = 'idusuarioalteracao'
+    end
+    object TAuxCompLubnome: TWideStringField
+      FieldName = 'nome'
+      Size = 50
+    end
+    object TAuxCompLubsyncaws: TIntegerField
+      FieldName = 'syncaws'
     end
   end
 end
